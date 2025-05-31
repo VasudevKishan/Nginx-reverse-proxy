@@ -1,0 +1,33 @@
+version: '3'
+services:
+  bookmark1:
+    build: .
+    image: bookmark-app:latest
+    environment:
+      - APP_NAME=bookmark1
+    ports:
+      - '3001:3000'
+
+  bookmark2:
+    image: bookmark-app:latest
+    environment:
+      - APP_NAME=bookmark2
+    ports:
+      - '3002:3000'
+
+  bookmark3:
+    image: bookmark-app:latest
+    environment:
+      - APP_NAME=bookmark3
+    ports:
+      - '3003:3000'
+
+  nginx:
+    build:
+      context: ./nginx-docker
+    ports:
+      - '8080:8080'
+    depends_on:
+      - bookmark1
+      - bookmark2
+      - bookmark3
