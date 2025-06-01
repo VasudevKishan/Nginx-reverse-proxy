@@ -1,8 +1,7 @@
 version: '3'
 services:
   bookmark1:
-    build: .
-    image: bookmark-app:latest
+    image: vasudevkishan/bookmark-app:latest
     environment:
       - APP_NAME=bookmark1
     ports:
@@ -11,7 +10,7 @@ services:
       - bookmark-network
 
   bookmark2:
-    image: bookmark-app:latest
+    image: vasudevkishan/bookmark-app:latest
     environment:
       - APP_NAME=bookmark2
     ports:
@@ -20,7 +19,7 @@ services:
       - bookmark-network
 
   bookmark3:
-    image: bookmark-app:latest
+    image: vasudevkishan/bookmark-app:latest
     environment:
       - APP_NAME=bookmark3
     ports:
