@@ -37,10 +37,10 @@ This project sets up an Nginx reverse proxy in front of your **Bookmark** applic
 
 bookmark/                # Cloned Bookmark app directory (all files reside here)
 ├── Dockerfile           # Dockerfile for the Bookmark app
-├── docker-compose.yml   # Docker Compose configuration
+├── bookmark-compose.yml   # Docker Compose configuration
 ├── nginx/
 │   ├── nginx.conf       # Nginx configuration file
-│   └── Dockerfile       # Dockerfile for Nginx reverse proxy
+│   └── certs/       # add the generated selfsigned certificates here
 └── README.md            # Project documentation
 ```
 
@@ -195,6 +195,77 @@ http {
 
 ---
 
+## SSL and HTTPS with Nginx
+
+Enabling SSL (Secure Sockets Layer) allows your reverse proxy to serve content over HTTPS, encrypting traffic between clients and your server. This enhances security by protecting data in transit.
+
+### Generating Self-Signed Certificates
+
+For development or testing, you can generate self-signed SSL certificates:
+
+```sh
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout nginx/certs/selfsigned.key \
+  -out nginx/certs/selfsigned.crt \
+  -subj "/CN=localhost"
+```
+
+Place the generated `selfsigned.crt` and `selfsigned.key` files in the `nginx/certs/` directory.
+
+### Updating `nginx.conf` for HTTPS
+
+To enable HTTPS, update your `nginx.conf` to include an SSL server block:
+
+```nginx
+server {
+  listen 443 ssl;
+  server_name localhost;
+
+  ssl_certificate     /etc/nginx/certs/selfsigned.crt;
+  ssl_certificate_key /etc/nginx/certs/selfsigned.key;
+
+  location / {
+    proxy_pass http://bookmark:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
+
+You may also want to redirect HTTP traffic to HTTPS:
+
+```nginx
+server {
+  listen 80;
+  server_name localhost;
+  return 301 https://$host$request_uri;
+}
+```
+
+### Updating `docker-compose.yml`
+
+Expose port 443 in your `docker-compose.yml`:
+
+```yaml
+ports:
+  - '8080:80'
+  - '8443:443'
+```
+
+Now, you can access your application securely at [https://localhost:8443](https://localhost:8443).
+
+### Notes
+
+- Browsers may warn about self-signed certificates. For production, obtain certificates from a trusted Certificate Authority (e.g., Let's Encrypt).
+- Always keep your private keys secure and never commit them to version control.
+- For automated SSL certificate management, consider using tools like [Certbot](https://certbot.eff.org/).
+
+---
+
+---
+
 ## Usage
 
 1. **Clone the repository:**
@@ -204,7 +275,26 @@ http {
    cd Nginx-reverse-proxy
    ```
 
-2. **Start the services:**
+2. **Generate a self-signed SSL certificate (for development):**
+
+   ```sh
+   openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+     -keyout nginx/certs/selfsigned.key \
+     -out nginx/certs/selfsigned.crt \
+     -subj "/CN=localhost"
+
+   # Or using Docker (no need to install OpenSSL locally):
+   docker run --rm -v ${PWD}/nginx-docker/certs:/certs alpine sh -c "
+      apk add openssl &&
+      openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /certs/selfsigned.key \
+        -out /certs/selfsigned.crt \
+        -subj '/CN=localhost'"
+   ```
+
+   Place the generated files in the `nginx/certs/` directory.
+
+3. **Start the services:**
    You can either start the services with `up` (which builds images if needed) or use `start` if the containers have already been created:
 
 - To build and start everything:
@@ -218,7 +308,7 @@ http {
   docker-compose start
   ```
 
-3. **Access the application:**
+4. **Access the application:**
    - Open [http://localhost:8080](http://localhost:8080) in your browser.
 
 ---

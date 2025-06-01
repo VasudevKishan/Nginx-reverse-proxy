@@ -23,11 +23,10 @@ services:
       - '3003:3000'
 
   nginx:
-    build:
-      context: ./nginx-docker
+    image: nginx
     ports:
-      - '8080:8080'
-    depends_on:
-      - bookmark1
-      - bookmark2
-      - bookmark3
+      - '443:443'
+      - '80:80'
+    volumes:
+      - ./nginx-docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-docker/certs:/etc/nginx/certs:ro
