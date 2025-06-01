@@ -8,6 +8,7 @@ This project demonstrates how to set up an Nginx reverse proxy using Docker and 
 
 - [Project Overview](#project-overview)
 - [Prerequisites](#prerequisites)
+- [How it works in this setup](#how-it-works-in-this-setup)
 - [Project Structure](#project-structure)
 - [Docker and Docker Compose](#docker-and-docker-compose)
 - [Nginx Reverse Proxy](#nginx-reverse-proxy)
@@ -20,6 +21,12 @@ This project demonstrates how to set up an Nginx reverse proxy using Docker and 
 ## Project Overview
 
 This project sets up an Nginx reverse proxy in front of your **Bookmark** application. The reverse proxy handles incoming HTTP requests and forwards them to the appropriate backend service (the bookmark app), enabling features like SSL termination, load balancing, and centralized routing.
+
+### How it works in this setup
+
+- **bookmark-compose.yaml** launches three Bookmark app containers (`bookmark1`, `bookmark2`, `bookmark3`) using a single built image.
+- **nginx-docker-compose.yaml** launches an Nginx container that acts as a reverse proxy and load balancer for the Bookmark app instances.
+- Both use a shared Docker network (`bookmark-network`) for service discovery.
 
 ---
 
@@ -37,15 +44,16 @@ This project sets up an Nginx reverse proxy in front of your **Bookmark** applic
 
 bookmark/                # Cloned Bookmark app directory (all files reside here)
 ├── Dockerfile           # Dockerfile for the Bookmark app
-├── docker-compose.yml   # Docker Compose configuration
+├── docker-compose.yaml   # Docker Compose configuration
 ├── nginx/
 │   ├── nginx.conf       # Nginx configuration file
-│   └── Dockerfile       # Dockerfile for Nginx reverse proxy
+│   └── nginx-docker-compose.yaml       # Dockerfile for Nginx reverse proxy
 └── README.md            # Project documentation
 ```
 
-- `docker-compose.yml`: Defines services (Nginx, bookmark app) and their configuration.
+- `docker-compose.yaml`: Defines services (Nginx, bookmark app) and their configuration.
 - `nginx/nginx.conf`: Nginx configuration file.
+- `nginx/nginx-docker-compose.yaml`: Docker Compose file specifically for running the Nginx reverse proxy container, defining its build context, ports, network, and dependencies.
 - `README.md`: Project documentation.
 
 ---
@@ -97,10 +105,10 @@ Docker Compose is a tool for defining and running multi-container Docker applica
 - `docker-compose up -d` — Start all services in detached mode.
 - `docker-compose down` — Stop and remove containers, networks, and volumes.
 - `docker-compose logs` — View output from services.
-- `docker-compose start` — Start existing stopped services defined in `docker-compose.yml`.
+- `docker-compose start` — Start existing stopped services defined in `docker-compose.yaml`.
 - `docker-compose stop` — Stop running services without removing containers.
 
-### Common `docker-compose.yml` Directives
+### Common `docker-compose.yaml` Directives
 
 - `version`: Specifies the Compose file format version.
 - `services`: Defines the containers to be run.
@@ -116,7 +124,7 @@ Docker Compose is a tool for defining and running multi-container Docker applica
 - `restart`: Sets the restart policy for containers.
 - `command`: Overrides the default command.
 
-**Example `docker-compose.yml`:**
+**Example `docker-compose.yaml`:**
 
 ```yaml
 version: '3.8'
@@ -202,21 +210,31 @@ http {
    ```sh
    git clone <this-repo-url>
    cd Nginx-reverse-proxy
+   git checkout reverse-proxy-setup-2
    ```
 
 2. **Start the services:**
-   You can either start the services with `up` (which builds images if needed) or use `start` if the containers have already been created:
 
-- To build and start everything:
+   Use Docker Compose V2 syntax (`docker compose` instead of `docker-compose`). Start each Compose file separately as follows:
 
-  ```sh
-  docker-compose up -d
-  ```
+   - To build and start the Bookmark app services (from `bookmark-compose.yaml`):
 
-- To start previously created (stopped) containers:
-  ```sh
-  docker-compose start
-  ```
+     ```sh
+     docker compose -f bookmark-compose.yaml up -d
+     ```
+
+   - To build and start the Nginx reverse proxy (from `nginx/nginx-docker-compose.yaml`):
+
+     ```sh
+     docker compose -f nginx/nginx-docker-compose.yaml up -d
+     ```
+
+   - To start previously created (stopped) containers for each Compose file:
+
+     ```sh
+     docker compose -f bookmark-compose.yaml start
+     docker compose -f nginx/nginx-docker-compose.yaml start
+     ```
 
 3. **Access the application:**
    - Open [http://localhost:8080](http://localhost:8080) in your browser.
