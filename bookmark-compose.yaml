@@ -7,6 +7,8 @@ services:
       - APP_NAME=bookmark1
     ports:
       - '3001:3000'
+    networks:
+      - bookmark-network
 
   bookmark2:
     image: bookmark-app:latest
@@ -14,6 +16,8 @@ services:
       - APP_NAME=bookmark2
     ports:
       - '3002:3000'
+    networks:
+      - bookmark-network
 
   bookmark3:
     image: bookmark-app:latest
@@ -21,13 +25,9 @@ services:
       - APP_NAME=bookmark3
     ports:
       - '3003:3000'
+    networks:
+      - bookmark-network
 
-  nginx:
-    build:
-      context: ./nginx-docker
-    ports:
-      - '8080:8080'
-    depends_on:
-      - bookmark1
-      - bookmark2
-      - bookmark3
+networks:
+  bookmark-network:
+    external: true
