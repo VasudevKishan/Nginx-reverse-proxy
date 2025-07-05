@@ -210,7 +210,7 @@ http {
 - To build and start everything:
 
   ```sh
-  docker-compose up -d
+  docker-compose -f bookmark-compose.yaml up -d
   ```
 
 - To start previously created (stopped) containers:
